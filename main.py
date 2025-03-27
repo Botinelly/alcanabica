@@ -3,8 +3,8 @@ from src.api.routes.user import router
 import uvicorn
 import os
 
-HOST = os.getenv("APP_HOST", "0.0.0.0")
-PORT = int(os.getenv("APP_PORT", 8000))
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", 8000))
 
 app = FastAPI()
 app.include_router(router)
