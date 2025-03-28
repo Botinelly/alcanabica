@@ -60,3 +60,6 @@ def delete_user(db: Session, user_id: int):
 
 def get_user_by_cpf(db: Session, cpf: str):
     return db.query(UserModel).filter(UserModel.cpf == cpf).first()
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(UserModel).filter(UserModel.email == email).first()
