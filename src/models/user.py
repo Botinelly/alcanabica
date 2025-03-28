@@ -1,22 +1,14 @@
-from pydantic import BaseModel, EmailStr
-from typing import List
-from datetime import date
+from sqlalchemy import Column, Integer, String, Date, ARRAY
+from sqlalchemy.orm import relationship
+from src.database.connection import Base
 
-class UserBase(BaseModel):
-    name: str
-    email: EmailStr
-    cpf: str
-    prescription_date: date
-    association_date: date
-    products: List[str]
+class User(Base):
+    __tablename__ = "users"
 
-class UserCreate(UserBase):
-    pass
-
-class UserUpdate(BaseModel):
-    name: str | None = None
-    email: EmailStr | None = None
-    cpf: str | None = None
-    prescription_date: date | None = None
-    association_date: date | None = None
-    products: List[str] | None = None
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    email = Column(String, unique=True)
+    cpf = Column(String, unique=True)
+    prescription_date = Column(Date)
+    association_date = Column(Date)
+    products = Column(ARRAY(Integer))
