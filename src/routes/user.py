@@ -64,3 +64,15 @@ def update_user(user_id: int, user_data: UserCreate, db: Session = Depends(get_d
 @router.delete("/{user_id}", status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     crud.delete_user(db, user_id)
+
+@router.get("/cpf/{cpf}", response_model=User)
+def read_user_by_cpf(cpf: str, db: Session = Depends(get_db)):
+    user = crud.get_user_by_cpf(db, cpf)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        **user.__dict__,
+        "products": db.query(ProductModel)
+            .filter(ProductModel.id.in_(user.products or []))
+            .all()
+    }

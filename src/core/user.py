@@ -57,3 +57,6 @@ def delete_user(db: Session, user_id: int):
     if user:
         db.delete(user)
         db.commit()
+
+def get_user_by_cpf(db: Session, cpf: str):
+    return db.query(UserModel).filter(UserModel.cpf == cpf).first()
