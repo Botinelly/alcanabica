@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ARRAY
+from sqlalchemy import Column, Integer, String, Date, ARRAY, JSON
 from sqlalchemy.orm import relationship
 from src.database.connection import Base
 
@@ -11,4 +11,5 @@ class User(Base):
     cpf = Column(String, unique=True)
     prescription_date = Column(Date)
     association_date = Column(Date)
-    products = Column(ARRAY(Integer))
+    products = Column(JSON, nullable=True)
+

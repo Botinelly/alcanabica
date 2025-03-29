@@ -17,51 +17,84 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/", response_model=User)
+def extract_product_ids(products_field: list[dict]) -> list[int]:
+    return [p["product_id"] for p in products_field or []] 
+
+@router.post("/")
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = crud.create_user(db, user)
-    products = db.query(ProductModel).filter(ProductModel.id.in_(db_user.products)).all()
+    products = db.query(ProductModel).filter(ProductModel.id.in_(extract_product_ids(db_user.products))).all()
     return {
         **db_user.__dict__,
         "products": products
     }
 
-@router.get("/", response_model=List[User])
-def read_users(db: Session = Depends(get_db)):
+@router.get("/")
+def get_all_users(db: Session = Depends(get_db)):
     users = crud.get_users(db)
-    return [
-        {
-            **u.__dict__,
-            "products": db.query(ProductModel)
-                .filter(ProductModel.id.in_(u.products or []))
-                .all()
-        }
-        for u in users
-    ]
+    result = []
+    for user in users:
+        product_ids = [p["product_id"] for p in user.products or []]
+        product_limits = {p["product_id"]: p["max_amount"] for p in user.products or []}
+        products = db.query(ProductModel).filter(ProductModel.id.in_(product_ids)).all()
+        product_response = []
+        for product in products:
+            product_response.append({
+                "product_id": product.id,
+                "name": product.name,
+                "description": product.description,
+                "price": product.price,
+                "quantity": product.quantity,
+                "max_amount": product_limits.get(product.id, 0)
+            })
+        result.append({
+            **user.__dict__,
+            "products": product_response
+        })
+    return result
 
-
-@router.get("/{user_id}", response_model=User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
+@router.get("/{user_id}")
+def get_user(user_id: int, db: Session = Depends(get_db)):
     user = crud.get_user(db, user_id)
+
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    product_ids = [p["product_id"] for p in user.products or []]
+    product_limits = {p["product_id"]: p["max_amount"] for p in user.products or []}
+
+    products = db.query(ProductModel).filter(ProductModel.id.in_(product_ids)).all()
+
+    product_response = []
+    for product in products:
+        product_response.append({
+            "product_id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "price": product.price,
+            "quantity": product.quantity,
+            "max_amount": product_limits.get(product.id, 0)
+        })
+
     return {
         **user.__dict__,
-        "products": db.query(ProductModel)
-            .filter(ProductModel.id.in_(user.products or []))
-            .all()
+        "products": product_response
     }
 
+@router.put("/{user_id}")
+def update_user(user_id: int, data: UserCreate, db: Session = Depends(get_db)):
+    user = crud.update_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-@router.put("/{user_id}", response_model=User)
-def update_user(user_id: int, user_data: UserCreate, db: Session = Depends(get_db)):
-    updated = crud.update_user(db, user_id, user_data)
-    if not updated:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {
-        **updated.__dict__,
-        "products": updated.product_objects
-    }
+    for key, value in data.items():
+        if hasattr(user, key):
+            setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 @router.delete("/{user_id}", status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
@@ -75,19 +108,37 @@ def read_user_by_cpf(cpf: str, db: Session = Depends(get_db)):
     return {
         **user.__dict__,
         "products": db.query(ProductModel)
-            .filter(ProductModel.id.in_(user.products or []))
+            .filter(ProductModel.id.in_(extract_product_ids(user.products) or []))
             .all()
     }
 
 @router.get("/email/{email}")
-def read_user_by_email(email: str, db: Session = Depends(get_db)):
+def get_user(email: str, db: Session = Depends(get_db)):
     user = crud.get_user_by_email(db, email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    products = db.query(ProductModel).filter(ProductModel.id.in_(user.products or [])).all()
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    product_ids = [p["product_id"] for p in user.products or []]
+    product_limits = {p["product_id"]: p["max_amount"] for p in user.products or []}
+
+    products = db.query(ProductModel).filter(ProductModel.id.in_(product_ids)).all()
+
+    product_response = []
+    for product in products:
+        product_response.append({
+            "product_id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "price": product.price,
+            "quantity": product.quantity,
+            "max_amount": product_limits.get(product.id, 0)
+        })
+
     return {
         **user.__dict__,
-        "products":  [f"{x.name} | R${x.price},00/g" for x in products]
+        "products": product_response,
+        "products_string":  [f"{x.name} | R${x.price},00/g" for x in products]
+
     }
 
 @router.get("/email/{email}/send-code")

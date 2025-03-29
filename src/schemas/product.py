@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ProductSummary(BaseModel):
     name: str
     description: str
@@ -7,6 +8,9 @@ class ProductSummary(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ProductUser(ProductSummary):
+    max_amount: int
 
 class ProductCreate(ProductSummary):
     quantity: int
