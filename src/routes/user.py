@@ -87,7 +87,7 @@ def read_user_by_email(email: str, db: Session = Depends(get_db)):
     products = db.query(ProductModel).filter(ProductModel.id.in_(user.products or [])).all()
     return {
         **user.__dict__,
-        "products":  [x.name for x in products]
+        "products":  [f"{x.name} | R${x.price},00/g" for x in products]
     }
 
 @router.get("/email/{email}/send-code")
