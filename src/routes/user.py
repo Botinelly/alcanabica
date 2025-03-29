@@ -79,16 +79,15 @@ def read_user_by_cpf(cpf: str, db: Session = Depends(get_db)):
             .all()
     }
 
-@router.get("/email/{email}", response_model=User)
+@router.get("/email/{email}")
 def read_user_by_email(email: str, db: Session = Depends(get_db)):
     user = crud.get_user_by_email(db, email)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    products = db.query(ProductModel).filter(ProductModel.id.in_(user.products or [])).all()
     return {
         **user.__dict__,
-        "products": db.query(ProductModel)
-            .filter(ProductModel.id.in_(user.products or []))
-            .all()
+        "products":  [x.name for x in products]
     }
 
 @router.get("/email/{email}/send-code")
