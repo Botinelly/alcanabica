@@ -94,7 +94,7 @@ def read_user_by_email(email: str, db: Session = Depends(get_db)):
 @router.get("/email/{email}/send-code")
 def send_verification_code(email: str, db: Session = Depends(get_db)):
     message = "Código enviado com sucesso para o e-mail."
-    if not vcore.create_and_send_code(db, email) == 000000:
+    if vcore.create_and_send_code(db, email) == 000000:
         message = "Esse e-mail não está cadastrado." 
     return {"message": message}
 
