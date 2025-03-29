@@ -24,6 +24,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 from src.database.connection import Base
 from src.models import user
 from src.models import product
+from src.models import verification
 # target_metadata = mymodel.Base.metadata
 # Interpret the config file for Python logging.
 fileConfig(context.config.config_file_name)
