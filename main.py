@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Security
 from src.routes.user import router as router_user
 from src.routes.product import router as router_product
+from src.routes.order import router as router_order
 from fastapi.security.api_key import APIKeyHeader
 from starlette.status import HTTP_403_FORBIDDEN
 from src.database.connection import SessionLocal
@@ -31,6 +32,8 @@ def get_api_key(api_key_header: str = Security(api_key_header)):
 
 app.include_router(router_user, dependencies=[Depends(get_api_key)])
 app.include_router(router_product, dependencies=[Depends(get_api_key)])
+app.include_router(router_order, dependencies=[Depends(get_api_key)])
+
 
 @app.on_event("startup")
 async def start_background_tasks():
