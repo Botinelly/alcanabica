@@ -38,12 +38,13 @@ async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Se
         product = db_product_dict.get(p["name"])
         if not product:
             continue
-        quantity = p.get("quantity", 1)
-        items.append({
-            "title": product.name,
-            "quantity": quantity,
-            "unit_price": float(product.price)
-        })
+        quantity = p.get("quantity", 0)
+        if quantity > 0:
+            items.append({
+                "title": product.name,
+                "quantity": quantity,
+                "unit_price": float(product.price)
+            })
 
     payload = {
         "items": items,
