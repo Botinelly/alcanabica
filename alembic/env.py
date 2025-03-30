@@ -25,6 +25,7 @@ from src.database.connection import Base
 from src.models import user
 from src.models import product
 from src.models import verification
+from src.models import order
 # target_metadata = mymodel.Base.metadata
 # Interpret the config file for Python logging.
 fileConfig(context.config.config_file_name)

@@ -13,3 +13,4 @@ class User(Base):
     association_date = Column(Date)
     products = Column(JSON, nullable=True)
 
+    orders = relationship("Order", back_populates="user")
