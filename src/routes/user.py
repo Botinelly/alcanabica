@@ -137,7 +137,7 @@ def get_user(email: str, db: Session = Depends(get_db)):
     return {
         **user.__dict__,
         "products": product_response,
-        "products_string":  [f"{x.name} | R${int(x.price)},00/g" for x in products]
+        "products_string":  [f"{x.name}" for x in products]
 
     }
 
