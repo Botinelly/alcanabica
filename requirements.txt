@@ -7,3 +7,4 @@ pydantic
 alembic
 python-multipart
 pydantic[email]
+requests
