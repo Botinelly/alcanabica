@@ -65,7 +65,7 @@ async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Se
     response = requests.post("https://api.mercadopago.com/checkout/preferences", json=payload, headers=headers)
 
     if response.ok:
-        return {"payment_link": response.json().get("init_point")}
+        return {"payment_link": response.json().get("init_point"), "order_resume": items}
 
     raise HTTPException(status_code=500, detail="Erro ao gerar pedido")
 
