@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from src.models.user import User as UserModel
 from src.models.product import Product as ProductModel
 from src.database.connection import SessionLocal
+from src.utils.email import send_order_email
 import requests
 import os
 
@@ -65,7 +66,10 @@ async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Se
     response = requests.post("https://api.mercadopago.com/checkout/preferences", json=payload, headers=headers)
 
     if response.ok:
-        return {"payment_link": response.json().get("init_point"), "order_resume": items}
-
+        pay_link = response.json().get("init_point")
+        send_order_email(email, items, pay_link)
+        send_order_email('alcanoreply@gmail.com', items, pay_link)
+        return {"payment_link": pay_link, "order_resume": items}
+    
     raise HTTPException(status_code=500, detail="Erro ao gerar pedido")
 
