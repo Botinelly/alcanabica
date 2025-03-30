@@ -28,15 +28,15 @@ def send_email(to_email: str, subject: str, body):
         server.login(from_email, from_password)
         server.send_message(message)
 
-def send_order_email(to_email: str, items: list, link: str):
+def send_order_email(to_email: str, items: list, link: str, order_code: str):
     smtp_server = os.getenv("EMAIL_HOST")
     smtp_port = int(os.getenv("EMAIL_PORT"))
     from_email = os.getenv("EMAIL_USER")
     from_password = os.getenv("EMAIL_PASSWORD")
     from_name = os.getenv("EMAIL_FROM")
 
-    subject = "Resumo do Pedido - Alcanabica"
-    body = "<h3>Resumo do Pedido</h3><ul>"
+    subject = f"Resumo do Pedido - Alcanabica - Pedido {order_code}"
+    body = f"<h3>Resumo do Pedido {order_code} </h3><ul>"
     for item in items:
         body += f"<li>{item['quantity']}x {item['title']} - R$ {item['unit_price']:.2f} cada</li>"
     body += f"</ul><p><a href='{link}'>Clique aqui para finalizar o pagamento</a></p>"

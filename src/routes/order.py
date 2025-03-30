@@ -7,6 +7,7 @@ from src.database.connection import SessionLocal
 from src.utils.email import send_order_email
 import requests
 import os
+import uuid
 
 router = APIRouter(prefix="/order", tags=["Mercado Pago"])
 
@@ -47,16 +48,20 @@ async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Se
                 "unit_price": float(product.price)
             })
 
-    payload = {
-        "items": items,
-        "payer": {"email": email},
-        "back_urls": {
-            "success": "https://alcanabica.org/success",
-            "failure": "https://alcanabica.org/failure",
-            "pending": "https://alcanabica.org/pending"
-        },
-        "auto_return": "approved"
-    }
+        # Gerar código do pedido
+        order_code = str(uuid.uuid4())[:8].upper()
+
+        payload = {
+            "items": items,
+            "payer": {"email": email},
+            "back_urls": {
+                "success": "https://alcanabica.org/success",
+                "failure": "https://alcanabica.org/failure",
+                "pending": "https://alcanabica.org/pending"
+            },
+            "auto_return": "approved",
+            "external_reference": order_code
+        }
 
     headers = {
         "Authorization": f"Bearer {os.getenv('MERCADO_PAGO_ACCESS_TOKEN')}",
@@ -67,9 +72,9 @@ async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Se
 
     if response.ok:
         pay_link = response.json().get("init_point")
-        send_order_email(email, items, pay_link)
-        send_order_email('alcanoreply@gmail.com', items, pay_link)
-        return {"payment_link": pay_link, "order_resume": items}
+        send_order_email(email, items, pay_link, order_code)
+        send_order_email('alcanoreply@gmail.com', items, pay_link, order_code)
+        return {"payment_link": pay_link, "order_resume": items,  "order_code": order_code}
     
     raise HTTPException(status_code=500, detail="Erro ao gerar pedido")
 
