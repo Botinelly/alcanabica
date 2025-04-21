@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Security
 from src.routes.user import router as router_user
 from src.routes.product import router as router_product
 from src.routes.order import router as router_order
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.api_key import APIKeyHeader
 from starlette.status import HTTP_403_FORBIDDEN
 from src.database.connection import SessionLocal
@@ -13,6 +14,8 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
 
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
@@ -34,6 +37,22 @@ app.include_router(router_user, dependencies=[Depends(get_api_key)])
 app.include_router(router_product, dependencies=[Depends(get_api_key)])
 app.include_router(router_order, dependencies=[Depends(get_api_key)])
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://34.77.31.159",
+        "http://23.251.142.192",
+        "https://34.77.31.159",
+        "https://23.251.142.192",
+        "https://185.230.63.107",
+        "http://185.230.63.107",
+        "http://loja.alcanabica.org",
+        "https://loja.alcanabica.org",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 async def start_background_tasks():

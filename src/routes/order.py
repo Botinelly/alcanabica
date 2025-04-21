@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Dict, List
 from fastapi import APIRouter, Request, HTTPException, status, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from src.schemas.order import OrderResponse
 from src.models.order import Order
@@ -22,8 +23,14 @@ def get_db():
     finally:
         db.close()
 
+class CreateOrderDTO(BaseModel):
+    email: str
+    raw_products: List[Dict]
+
 @router.post("/create-order")
-async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Session = Depends(get_db)):
+async def create_mercado_pago_order(data: CreateOrderDTO, db: Session = Depends(get_db)):
+    email = data.email
+    raw_products = data.raw_products
     # body = await req.json()
     # raw_products = body.get("products", [])  # Ex: [ { "name": "Produto X", "quantity": 2 }, ... ]
     # email = body.get("email")
@@ -35,13 +42,13 @@ async def create_mercado_pago_order(email: str, raw_products: List[Dict], db: Se
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    product_names = [p["name"] for p in raw_products]
+    product_names = [p["title"] for p in raw_products]
     db_products = db.query(ProductModel).filter(ProductModel.name.in_(product_names)).all()
     db_product_dict = {p.name: p for p in db_products}
 
     items = []
     for p in raw_products:
-        product = db_product_dict.get(p["name"])
+        product = db_product_dict.get(p["title"])
         if not product:
             continue
         quantity = p.get("quantity", 0)
