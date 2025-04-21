@@ -46,7 +46,14 @@ async def create_mercado_pago_order(data: CreateOrderDTO, db: Session = Depends(
     db_products = db.query(ProductModel).filter(ProductModel.name.in_(product_names)).all()
     db_product_dict = {p.name: p for p in db_products}
 
-    items = []
+    items = [
+        {
+            "product_id": 0,
+            "title": "Frete",
+            "quantity": 1,
+            "unit_price": float(50)
+        }
+    ]
     for p in raw_products:
         product = db_product_dict.get(p["title"])
         if not product:

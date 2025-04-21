@@ -172,7 +172,7 @@
     </div>
     <div id="loading">Processando seu pedido...</div>
     <div id="aviso-frete">
-      O valor do frete será calculado manualmente após a finalização do pedido e informado por e-mail.
+      O valor do frete é fixo em R$50,00 para qualquer lugar do Brasil.
     </div>
   </div>
 
@@ -317,14 +317,13 @@
         if (qtd > 0) produtosSelecionados.push({ product_id: prod.product_id, title: prod.name, quantity: qtd, unit_price: prod.price });
         total += subtotal;
       });
-      document.getElementById('total-pedido').innerText = `Total: R$ ${total.toFixed(2)}`;
+      document.getElementById('total-pedido').innerText = `Total: R$ ${total.toFixed(2)} + R$ 50,00 (frete fixo)`;
       document.getElementById('checkout').style.display = produtosSelecionados.length ? 'block' : 'none';
     }
 
     async function finalizarCompra() {
       const email = document.getElementById('email').value.trim();
       if (!email || produtosSelecionados.length === 0) return alert('Verifique o e-mail e selecione produtos.');
-      
       mostrarLoading();
       try {
         const apiKey = '48Mj2jqp4Tqu9i1lNcYYhJOgQD4n8zUkACxWrphaPxmCljWqpAguDICNn8WoVhmgwQZ7LYGiuve3338wBHM6cDzLbr4noTTdeZsnk3QK9qtDWHy5KJ1PfvnPruKEPbX4';
