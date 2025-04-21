@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout - ALCA</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-color: #f4f6f8;
+      --text-color: #333;
+      --card-bg: #fff;
+      --accent-color: #2e7d32;
+      --accent-hover: #256529;
+      --border-color: #ccc;
+      --table-head: #f1f1f1;
+      --warning-bg: #fdf8e1;
+    }
+    [data-theme="dark"] {
+      --bg-color: #1e1e1e;
+      --text-color: #eaeaea;
+      --card-bg: #2c2c2c;
+      --accent-color: #6fcf97;
+      --accent-hover: #4caf50;
+      --border-color: #444;
+      --table-head: #333;
+      --warning-bg: #2f2f1f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+    h1 { text-align: center; color: var(--accent-color); }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+    }
+    .input-group button {
+      padding: 10px 20px;
+      background-color: var(--accent-color);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #theme-toggle { margin-bottom: 20px; text-align: right; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    th { background-color: var(--table-head); }
+    select { padding: 5px; border-radius: 4px; }
+    #checkout { margin-top: 30px; display: none; }
+    #total-pedido { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+    #finalizar {
+      padding: 12px 24px;
+      background-color: var(--accent-color);
+      color: #fff;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #aviso-frete {
+      margin-top: 40px;
+      font-size: 15px;
+      text-align: center;
+      color: var(--text-color);
+      padding: 10px;
+      background-color: var(--warning-bg);
+      border-radius: 5px;
+    }
+    #modal-overlay, #verificacao-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #modal {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 100%;
+      color: var(--text-color);
+    }
+    #modal h2 { color: var(--accent-color); }
+    #modal a {
+      display: inline-block;
+      margin-top: 20px;
+      background: var(--accent-color);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+    #global-loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    #global-loading-overlay div {
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="theme-toggle">
+      <button onclick="alternarTema()">Alternar Tema</button>
+    </div>
+    <h1>Seu Carrinho - ALCA</h1>
+    <div class="input-group">
+      <input type="email" id="email" placeholder="Digite seu e-mail">
+      <button onclick="buscarProdutos()">Buscar Produtos</button>
+    </div>
+    <table id="carrinho" style="display:none">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Preço</th>
+          <th>Quantidade</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="checkout">
+      <p id="total-pedido"></p>
+      <button id="finalizar" onclick="finalizarCompra()">Finalizar Compra</button>
+    </div>
+    <div id="loading">Processando seu pedido...</div>
+    <div id="aviso-frete">
+      O valor do frete será calculado manualmente após a finalização do pedido e informado por e-mail.
+    </div>
+  </div>
+
+  <div id="verificacao-overlay" style="display:none">
+    <div id="modal">
+      <h2>Verificação de E-mail</h2>
+      <p>Enviamos um código de verificação para seu e-mail. Digite abaixo para continuar:</p>
+      <input type="text" id="codigo-verificacao" placeholder="Código de 6 dígitos" style="width: 100%; padding: 10px; margin-top: 10px;">
+      <button onclick="validarCodigo()" style="margin-top: 15px;">Validar Código</button>
+    </div>
+  </div>
+
+  <div id="modal-overlay" style="display:none">
+    <div id="modal">
+      <h2>Pedido Realizado</h2>
+      <p>Seu pedido foi registrado com sucesso. Efetue o pagamento para finalizá-lo.</p>
+      <div id="modal-detalhes"></div>
+      <p>Acompanhe a confirmação por e-mail e WhatsApp.</p>
+    </div>
+  </div>
+
+  <div id="global-loading-overlay"><img src="loading.gif"></img></div>
+
+  <script>
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const temaSalvo = localStorage.getItem('alca_tema');
+    if (temaSalvo) {
+      document.documentElement.setAttribute('data-theme', temaSalvo);
+    } else if (prefersDark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    function alternarTema() {
+      const html = document.documentElement;
+      const temaAtual = html.getAttribute('data-theme');
+      const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', novoTema);
+      localStorage.setItem('alca_tema', novoTema);
+    }
+
+    function mostrarLoading() {
+      document.getElementById('global-loading-overlay').style.display = 'flex';
+    }
+
+    function esconderLoading() {
+      document.getElementById('global-loading-overlay').style.display = 'none';
+    }
+
+    let produtosSelecionados = [];
+    let produtosData = [];
+
+    async function buscarProdutos() {
+      const email = document.getElementById('email').value.trim();
+      if (!email || !email.includes('@')) return alert('Digite um e-mail válido.');
+      const apiKey = '48Mj2jqp4Tqu9i1lNcYYhJOgQD4n8zUkACxWrphaPxmCljWqpAguDICNn8WoVhmgwQZ7LYGiuve3338wBHM6cDzLbr4noTTdeZsnk3QK9qtDWHy5KJ1PfvnPruKEPbX4';
+
+      mostrarLoading();
+      const res = await fetch(`https://alcanabica-a5sf.onrender.com/users/email/${email}/send-code`, {
+        method: 'GET',
+        headers: { "X-API-Key": apiKey }
+      });
+      esconderLoading();
+
+      if (res.ok) {
+        document.getElementById('verificacao-overlay').style.display = 'flex';
+      } else {
+        alert('Erro ao enviar código. Verifique o e-mail.');
+      }
+    }
+
+    async function validarCodigo() {
+      const email = document.getElementById('email').value.trim();
+      const code = document.getElementById('codigo-verificacao').value.trim();
+      if (!code) return alert('Digite o código recebido por e-mail.');
+
+      const apiKey = '48Mj2jqp4Tqu9i1lNcYYhJOgQD4n8zUkACxWrphaPxmCljWqpAguDICNn8WoVhmgwQZ7LYGiuve3338wBHM6cDzLbr4noTTdeZsnk3QK9qtDWHy5KJ1PfvnPruKEPbX4';
+
+      mostrarLoading();
+      const res = await fetch(`https://alcanabica-a5sf.onrender.com/users/validate`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey
+        },
+        body: JSON.stringify({ email, code })
+      });
+      esconderLoading();
+
+      const data = await res.json();
+
+      if (!data.valid) {
+        alert('Código inválido.');
+        return;
+      }
+
+      document.getElementById('verificacao-overlay').style.display = 'none';
+      carregarProdutos(email);
+    }
+
+    async function carregarProdutos(email) {
+      const apiKey = '48Mj2jqp4Tqu9i1lNcYYhJOgQD4n8zUkACxWrphaPxmCljWqpAguDICNn8WoVhmgwQZ7LYGiuve3338wBHM6cDzLbr4noTTdeZsnk3QK9qtDWHy5KJ1PfvnPruKEPbX4';
+
+      mostrarLoading();
+      const res = await fetch(`https://alcanabica-a5sf.onrender.com/users/email/${email}`, {
+        headers: { "X-API-Key": apiKey }
+      });
+      esconderLoading();
+
+      const data = await res.json();
+      if (!data.products || !Array.isArray(data.products)) return alert('Usuário não encontrado.');
+
+      produtosData = data.products;
+      produtosSelecionados = [];
+      const tbody = document.querySelector('#carrinho tbody');
+      tbody.innerHTML = '';
+
+      data.products.forEach((prod, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${prod.name}</td>
+            <td>R$ ${prod.price.toFixed(2)}</td>
+            <td>
+              <select id="qtd-${i}" onchange="atualizarCarrinho()">
+                ${Array.from({ length: prod.max_amount + 1 }, (_, n) => `<option value="${n}">${n}</option>`).join('')}
+              </select>
+            </td>
+            <td id="subtotal-${i}">R$ 0,00</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('carrinho').style.display = 'table';
+    }
+
+    function atualizarCarrinho() {
+      produtosSelecionados = [];
+      let total = 0;
+      produtosData.forEach((prod, i) => {
+        const qtd = parseInt(document.getElementById(`qtd-${i}`).value);
+        const subtotal = qtd * prod.price;
+        document.getElementById(`subtotal-${i}`).innerText = `R$ ${subtotal.toFixed(2)}`;
+        if (qtd > 0) produtosSelecionados.push({ product_id: prod.product_id, title: prod.name, quantity: qtd, unit_price: prod.price });
+        total += subtotal;
+      });
+      document.getElementById('total-pedido').innerText = `Total: R$ ${total.toFixed(2)}`;
+      document.getElementById('checkout').style.display = produtosSelecionados.length ? 'block' : 'none';
+    }
+
+    async function finalizarCompra() {
+      const email = document.getElementById('email').value.trim();
+      if (!email || produtosSelecionados.length === 0) return alert('Verifique o e-mail e selecione produtos.');
+      
+      mostrarLoading();
+      try {
+        const apiKey = '48Mj2jqp4Tqu9i1lNcYYhJOgQD4n8zUkACxWrphaPxmCljWqpAguDICNn8WoVhmgwQZ7LYGiuve3338wBHM6cDzLbr4noTTdeZsnk3QK9qtDWHy5KJ1PfvnPruKEPbX4';
+        const res = await fetch('https://alcanabica-a5sf.onrender.com/order/create-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            "X-API-Key": apiKey
+          },
+          body: JSON.stringify({ email, raw_products: produtosSelecionados })
+        });
+        const order = await res.json();
+
+        if (order?.payment_link && order?.order_resume) {
+          const detalhes = order.order_resume.map(p => `<li>${p.title} (x${p.quantity}) - R$ ${p.unit_price}</li>`).join('');
+          document.getElementById('modal-detalhes').innerHTML = `
+            <p><strong>Código do Pedido:</strong> ${order.order_code}</p>
+            <ul>${detalhes}</ul>
+            <a href="${order.payment_link}" target="_blank">Ir para Pagamento</a>
+          `;
+          document.getElementById('modal-overlay').style.display = 'flex';
+        } else {
+          alert('Erro ao gerar pedido.');
+        }
+      } catch (err) {
+        alert('Erro ao finalizar pedido.');
+      } finally {
+        esconderLoading();
+      }
+    }
+  </script>
+</body>
+</html>

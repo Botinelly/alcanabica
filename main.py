@@ -48,6 +48,8 @@ app.add_middleware(
         "http://185.230.63.107",
         "http://loja.alcanabica.org",
         "https://loja.alcanabica.org",
+        "https://alcanabica-a5sf.onrender.com",
+        "http://alcanabica-a5sf.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
