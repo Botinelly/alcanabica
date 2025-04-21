@@ -117,12 +117,11 @@ async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
 
     if not payment_id:
         return {"status": "ignored"}
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://api.mercadopago.com/v1/payments/{payment_id}",
-            headers={"Authorization": f"Bearer {os.getenv('MERCADO_PAGO_ACCESS_TOKEN')}"}
-        )
+    
+    response = requests.get(
+        f"https://api.mercadopago.com/v1/payments/{payment_id}",
+        headers={"Authorization": f"Bearer {os.getenv('MERCADO_PAGO_ACCESS_TOKEN')}"}
+    )
 
     if response.status_code != 200:
         return {"status": "error", "detail": "payment not found"}
