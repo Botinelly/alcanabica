@@ -9,6 +9,7 @@ from src.models.user import User as UserModel
 from src.models.product import Product as ProductModel
 from src.database.connection import SessionLocal
 from src.utils.email import send_order_email
+import httpx
 import requests
 import os
 import json
@@ -112,8 +113,23 @@ async def create_mercado_pago_order(data: CreateOrderDTO, db: Session = Depends(
 @router.post("/webhook")
 async def mercado_pago_webhook(request: Request, db: Session = Depends(get_db)):
     payload = await request.json()
-    external_reference = payload.get("data", {}).get("external_reference")
-    payment_status = payload.get("data", {}).get("status")
+    payment_id = payload.get("data", {}).get("id")
+
+    if not payment_id:
+        return {"status": "ignored"}
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"https://api.mercadopago.com/v1/payments/{payment_id}",
+            headers={"Authorization": {os.getenv('MERCADO_PAGO_ACCESS_TOKEN')}}
+        )
+
+    if response.status_code != 200:
+        return {"status": "error", "detail": "payment not found"}
+
+    payment_info = response.json()
+    external_reference = payment_info.get("external_reference")
+    payment_status = payment_info.get("status")
 
     if external_reference and payment_status:
         db.query(Order).filter(Order.order_code == external_reference).update({"status": payment_status})
